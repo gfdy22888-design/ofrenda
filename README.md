@@ -8,7 +8,9 @@ through WebAssembly — no backend, no account, no upload.
 
 Built for **Hacktoberfest 2026 · DEV Challenge Week 4: Ghost in the Machine**.
 
-> Instant demo, no downloads: open `index.html?demo=1`
+**Live:** https://ofrenda-altar.app.workbuddy.host/?sharecode=KXM3HYYMEC
+
+> Instant demo, no downloads: append `&demo=1` to that link.
 
 ---
 

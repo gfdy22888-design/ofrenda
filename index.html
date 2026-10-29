@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ofrenda — a memory altar that never leaves your device</title>
+<meta name="description" content="Turn a voice memo from someone you love into a printable remembrance card. Whisper and a small open-weight model run entirely in your browser. Nothing is uploaded." />
+<link rel="stylesheet" href="./styles.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%8C%BC%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+
+<div class="papel" aria-hidden="true"></div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">✳</span>
+      <span class="brand-name">Ofrenda</span>
+    </div>
+    <p class="tagline">A memory altar that never leaves your device.</p>
+    <p class="sub">Record a voice memo from someone you love. Whisper and a small open&#8209;weight model run inside this tab and turn it into a printable remembrance card. No upload, no account, no server that can switch itself off.</p>
+    <p class="privacy-strip"><span class="dot"></span> Everything below happens on your machine.</p>
+  </div>
+</header>
+
+<main class="wrap" id="app">
+
+  <!-- STEP 1 -->
+  <section class="step" id="step-source" data-step="1">
+    <h2><span class="num">01</span> Bring a memory</h2>
+    <p class="hint">Audio never leaves this tab. If you'd rather type, that works too — the writer model still does the writing.</p>
+
+    <div class="tabs" role="tablist">
+      <button class="tab is-on" data-tab="record" role="tab">Record</button>
+      <button class="tab" data-tab="upload" role="tab">Upload audio</button>
+      <button class="tab" data-tab="type" role="tab">Type it</button>
+      <button class="tab" data-tab="sample" role="tab">Use a sample</button>
+    </div>
+
+    <div class="panel" data-panel="record">
+      <button id="btn-record" class="btn btn-primary">
+        <span class="rec-dot"></span> Start recording
+      </button>
+      <span id="rec-timer" class="timer">00:00</span>
+      <p class="micro">Ask them one question and stay quiet: <em>“What do you want us to remember about you?”</em></p>
+    </div>
+
+    <div class="panel is-hidden" data-panel="upload">
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="file-audio" accept="audio/*" hidden />
+        <span class="dz-icon">⤒</span>
+        <span class="dz-label">Drop an audio file, or click to choose</span>
+        <span class="dz-sub">m4a, mp3, wav, ogg — decoded locally in the browser</span>
+      </label>
+      <p class="micro" id="file-name"></p>
+    </div>
+
+    <div class="panel is-hidden" data-panel="type">
+      <textarea id="typed-memory" rows="6" placeholder="She always said the kitchen smelled of marigolds before dawn…"></textarea>
+    </div>
+
+    <div class="panel is-hidden" data-panel="sample">
+      <p class="micro">A short memo from <strong>Rosa</strong>, recorded in 2019. Loaded from a bundled text file — no network request.</p>
+      <button class="btn btn-ghost" id="btn-sample">Load Rosa's memo</button>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-primary" id="btn-transcribe" disabled>Transcribe on this device</button>
+      <span class="status" id="asr-status"></span>
+    </div>
+    <div class="progress is-hidden" id="asr-progress"><div class="bar"></div></div>
+
+    <details class="advanced">
+      <summary>Model settings</summary>
+      <div class="adv-grid">
+        <label>Speech model
+          <select id="sel-asr">
+            <option value="tiny" selected>whisper-tiny · 39 MB · fastest</option>
+            <option value="base">whisper-base · 145 MB · better with accents</option>
+          </select>
+        </label>
+        <label>Spoken language
+          <select id="sel-lang">
+            <option value="auto" selected>Detect automatically</option>
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="zh">中文</option>
+            <option value="fr">Français</option>
+            <option value="pt">Português</option>
+          </select>
+        </label>
+      </div>
+      <p class="micro">Weights are fetched once from the Hugging Face CDN, then cached by your browser. After that the whole app works with the network off.</p>
+    </details>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="step is-locked" id="step-transcript" data-step="2">
+    <h2><span class="num">02</span> Read what was said</h2>
+    <p class="hint">Fix anything the model misheard. This is your transcript — edit it freely.</p>
+    <textarea id="transcript" rows="7" placeholder="Your transcript will appear here."></textarea>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="step is-locked" id="step-details" data-step="3">
+    <h2><span class="num">03</span> Who is on the altar</h2>
+    <p class="hint">Three details turn a transcript into something worth keeping.</p>
+    <div class="grid-3">
+      <label class="field">
+        <span>Their name</span>
+        <input id="f-name" type="text" placeholder="Rosa Elena" autocomplete="off" />
+      </label>
+      <label class="field">
+        <span>Who they are to you</span>
+        <input id="f-relation" type="text" placeholder="my grandmother" autocomplete="off" />
+      </label>
+      <label class="field">
+        <span>One thing to keep</span>
+        <input id="f-keep" type="text" placeholder="the smell of marigolds at dawn" autocomplete="off" />
+      </label>
+    </div>
+    <div class="grid-3">
+      <label class="field">
+        <span>Card language</span>
+        <select id="f-lang">
+          <option value="en" selected>English</option>
+          <option value="es">Español</option>
+          <option value="zh">中文</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Title on the card</span>
+        <input id="f-title" type="text" value="In memory" autocomplete="off" />
+      </label>
+      <label class="field">
+        <span>Dates (optional)</span>
+        <input id="f-dates" type="text" placeholder="1938 — 2019" autocomplete="off" />
+      </label>
+    </div>
+
+    <label class="switchline">
+      <input type="checkbox" id="chk-writer" checked />
+      <span>Let the local writer model compose the text <em>(recommended)</em></span>
+    </label>
+
+    <div class="row-actions">
+      <button class="btn btn-primary" id="btn-compose">Light the candles</button>
+      <span class="status" id="gen-status"></span>
+    </div>
+    <div class="progress is-hidden" id="gen-progress"><div class="bar"></div></div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section class="step is-locked" id="step-card" data-step="4">
+    <h2><span class="num">04</span> The card</h2>
+    <p class="hint">Download it, print it, or hang it. The link in your address bar carries the whole card — it opens anywhere, no account needed.</p>
+
+    <div class="card-stage">
+      <div id="card-host" class="card-host"></div>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-primary" id="btn-png">Download PNG</button>
+      <button class="btn btn-ghost" id="btn-print">Print</button>
+      <button class="btn btn-ghost" id="btn-copy-link">Copy share link</button>
+      <button class="btn btn-ghost" id="btn-again">Start another</button>
+    </div>
+    <p class="micro" id="share-note"></p>
+  </section>
+
+</main>
+
+<footer class="wrap foot">
+  <p><strong>Ofrenda</strong> runs Whisper and a 0.5B open-weight language model through WebAssembly in your browser. There is no backend. Your recording, your transcript, and the card data stay in this tab (and in the share link only if you choose to copy it).</p>
+  <p class="foot-meta">Built for Hacktoberfest 2026 · <a href="https://dev.to/challenges/hacktoberfest-week4-2026-10-26">Ghost in the Machine</a> · MIT licensed</p>
+</footer>
+
+<script type="module" src="./src/app.js"></script>
+</body>
+</html>
